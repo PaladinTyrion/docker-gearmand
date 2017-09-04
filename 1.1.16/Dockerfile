@@ -1,14 +1,21 @@
 FROM alpine:3.6
+MAINTAINER Paladintyrion <paladintyrion@gmail.com>
 
 ENV GEARMAND_VERSION 1.1.16
 ENV GEARMAND_SHA1 722b42b6d9a68dab24c83c71ff3fa1c2288b9c06
 
-RUN addgroup -S gearman && adduser -G gearman -S -D -H -s /bin/false -g "Gearman Server" gearman
+# RUN addgroup -S gearman && adduser -G gearman -S -D -H -s /bin/false -g "Gearman Server" gearman
 
 COPY patches/libhashkit-common.h.patch /libhashkit-common.h.patch
 COPY patches/libtest-cmdline.cc.patch /libtest-cmdline.cc.patch
 
 RUN set -x \
+	&& apk update \
+	&& apk add --no-cache supervisor \
+	&& mkdir -p /etc/supervisord.d
+
+RUN set -x \
+	&& apk update \
 	&& apk add --no-cache --virtual .build-deps \
 		wget \
 		tar \
@@ -56,12 +63,10 @@ RUN set -x \
 	&& apk del .build-deps \
 	&& /usr/local/sbin/gearmand --version
 
+COPY supervisord.conf /etc/supervisord.conf
 COPY gearmand.conf /etc/gearmand.conf
+COPY superv_gearman.conf /etc/supervisord.d/superv_gearman.conf
 
-COPY docker-entrypoint.sh /usr/local/bin/
-RUN ln -s usr/local/bin/docker-entrypoint.sh /entrypoint.sh # backwards compat
-ENTRYPOINT ["docker-entrypoint.sh"]
-
-USER gearman
+# USER gearman
 EXPOSE 4730
-CMD ["gearmand"]
+CMD ["supervisord -c /etc/supervisord.conf"]
