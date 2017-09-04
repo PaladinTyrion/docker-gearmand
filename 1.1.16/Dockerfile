@@ -45,9 +45,9 @@ RUN set -x \
 		--disable-libtokyocabinet \
 		--disable-libdrizzle \
 		--disable-libmemcached \
+		--disable-hiredis \
 		--enable-ssl \
-		--enable-hiredis \
-		--enable-jobserver=no \
+		--enable-jobserver=yes \
 	&& make \
 	&& make install \
 	&& cd / && rm -rf /usr/src/gearmand \
